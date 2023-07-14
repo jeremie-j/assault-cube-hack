@@ -1,2 +1,1 @@
-mod memory_helper;
-pub use memory_helper::MemoryHelper;
+pub mod memory_helper;
