@@ -10,7 +10,7 @@ For now it only display values of the game (not very impressive). But it will be
 I know, first 'big' project with rust, feel free to open a pull request if you wan't to improve the repo
 
 ### Todos
-- [] Implement Keybinds to toggle module
-- [] Add a gui, or at lest a println to show wich module is loaded / active
-- [] Add a module that freeze value in memory
-- [] Add a module that write value in memory
+- [ ] Implement Keybinds to toggle module
+- [ ] Add a gui, or at lest a println to show wich module is loaded / active
+- [ ] Add a module that freeze value in memory
+- [ ] Add a module that write value in memory
