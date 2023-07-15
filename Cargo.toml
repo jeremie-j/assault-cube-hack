@@ -1,12 +1,11 @@
 [package]
-name = "sotcheat"
+name = "assaultcubehack"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-package = "0.0.0"
-wgpu = "0.15.1"
-winapi = {version = "0.3.9", features = ["everything"]}
-winit = "0.28.3"
+ggez = "0.9.3"
+winapi = { version = "0.3.9", features = ["everything", "memoryapi", "handleapi"] }
+
