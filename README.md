@@ -7,7 +7,7 @@ For now it only display values of the game (not very impressive). But it will be
 
 
 ### "The code is trash"
-I know, first 'big' project with rust, feel free to open a pull request if you wan't to improve the repo
+Of course ! Feel free to open a pull request if you wan't to improve the repo
 
 ### Todos
 - [ ] Implement Keybinds to toggle module
