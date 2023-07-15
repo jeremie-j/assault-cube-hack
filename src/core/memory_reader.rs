@@ -7,18 +7,6 @@ use crate::helpers::memory_helper;
 const AMMO_OFFSET: [u32; 3] = [0x374, 0x14, 0x0];
 const CAN_JUMP_OFFSET: [u32; 3] = [0x374, 0x8, 0x5D];
 
-struct CheatState {
-    infinite_ammo: bool,
-    anti_recoil: bool,
-    infinite_jump: bool,
-}
-
-struct MemoryAdresses {
-    player_adress: u32,
-    ammo_adress: u32,
-    can_jump_adress: u32,
-}
-
 pub trait Cheat {
     fn update(&mut self) -> Result<(), String>;
 }
@@ -48,9 +36,12 @@ impl<T: Cheat> CheatInstance<T> {
         self.cheats.push(cheat);
     }
 
-    pub fn refresh(&mut self) {
-        for cheat in &mut self.cheats {
-            cheat.update();
+    pub fn run(&mut self) {
+        loop {
+            print!("\x1B[2J\x1B[1;1H");
+            for cheat in &mut self.cheats {
+                let _ = cheat.update();
+            }
         }
     }
 }

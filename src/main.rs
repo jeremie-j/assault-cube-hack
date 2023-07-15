@@ -18,33 +18,5 @@ fn main() {
         instance.game_base_adress,
         instance.game_handle,
     ));
-    loop {
-        print!("\x1B[2J\x1B[1;1H");
-        instance.refresh();
-    }
-
-    // let mut ammo_value: u32 = 200;
-    // unsafe {
-    //     WriteProcessMemory(
-    //         handle,
-    //         ammo_address as *mut _,
-    //         &mut ammo_value as *mut u32 as LPCVOID,
-    //         4,
-    //         0 as *mut _,
-    //     );
-    // }
-
-    // println!("{}", memory_helper::get_last_error_message());
-
-    // println!("Ammos count: {}", ammo_value);
-    // unsafe {
-    //     ReadProcessMemory(
-    //         handle,
-    //         ammo_address as *mut _,
-    //         &mut ammo_value as *mut u32 as *mut c_void,
-    //         4,
-    //         0 as *mut _,
-    //     );
-    // }
-    // println!("Ammos count: {}", ammo_value);
+    instance.run();
 }
