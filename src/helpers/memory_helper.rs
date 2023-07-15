@@ -10,14 +10,11 @@ use winapi::um::tlhelp32::{
 use winapi::um::winnt::{PROCESS_ALL_ACCESS, PROCESS_VM_READ, PROCESS_VM_WRITE};
 use winapi::{
     ctypes::{c_long, c_void},
+    shared::minwindef::{BOOL, DWORD, FALSE, HMODULE, LPCVOID, LPVOID},
     shared::ntdef::HANDLE,
-    shared::{
-        basetsd::SIZE_T,
-        minwindef::{BOOL, DWORD, FALSE, HMODULE, LPCVOID, LPVOID, TRUE},
-    },
     um::{
         handleapi::INVALID_HANDLE_VALUE,
-        libloaderapi::{GetModuleHandleA, GetProcAddress},
+        libloaderapi::GetModuleHandleA,
         memoryapi::ReadProcessMemory,
         tlhelp32::{Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS},
         winnt::{PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS},
@@ -29,9 +26,10 @@ pub fn get_module_handle(name: *const u8) -> HMODULE {
 }
 
 pub fn get_module_base_adress(pid: DWORD, module_name: &str) -> Result<usize, String> {
-    let base_adress: usize = 0;
-    let mut module_entry = MODULEENTRY32::default();
-    module_entry.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
+    let mut module_entry = MODULEENTRY32 {
+        dwSize: std::mem::size_of::<MODULEENTRY32>() as u32,
+        ..Default::default()
+    };
     let handle_snap: HANDLE =
         unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid) };
     if handle_snap == INVALID_HANDLE_VALUE {
@@ -40,8 +38,6 @@ pub fn get_module_base_adress(pid: DWORD, module_name: &str) -> Result<usize, St
     let module = unsafe { Module32First(handle_snap, &mut module_entry) };
     if module != 0 {
         loop {
-            let mut temp = Vec::<u8>::new();
-
             let result = unsafe { CStr::from_ptr(module_entry.szModule.as_ptr()) }.to_owned();
             if let Ok(entry_name) = result.to_str() {
                 if entry_name == module_name {
@@ -49,9 +45,9 @@ pub fn get_module_base_adress(pid: DWORD, module_name: &str) -> Result<usize, St
                     return Ok(module_entry.modBaseAddr as usize);
                 }
             }
-            let sucess = unsafe { Module32Next(handle_snap, &mut module_entry) };
-            if sucess == 0 {
-                return Err(String::from("Could not find module"));
+            let success = unsafe { Module32Next(handle_snap, &mut module_entry) };
+            if success == FALSE {
+                break;
             }
         }
     }
@@ -111,7 +107,7 @@ pub fn pattern_scan(module: HMODULE, sig: &str) -> *mut u8 {
     0 as *mut _
 }
 
-pub fn get_proc_id(exe_name: &str) -> DWORD {
+pub fn get_proc_id(exe_name: &str) -> Result<DWORD, String> {
     unsafe {
         let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if snapshot == INVALID_HANDLE_VALUE {
@@ -119,18 +115,10 @@ pub fn get_proc_id(exe_name: &str) -> DWORD {
         }
         let mut entry = PROCESSENTRY32 {
             dwSize: std::mem::size_of::<PROCESSENTRY32>() as u32,
-            cntUsage: 0,
-            th32ProcessID: 0,
-            th32DefaultHeapID: 0,
-            th32ModuleID: 0,
-            cntThreads: 0,
-            th32ParentProcessID: 0,
-            pcPriClassBase: 0,
-            dwFlags: 0,
-            szExeFile: [0; 260],
+            ..Default::default()
         };
         let mut proc_id: DWORD = 0;
-        while Process32Next(snapshot, &mut entry) != 0 {
+        while Process32Next(snapshot, &mut entry) != FALSE {
             if exe_name
                 == std::ffi::CStr::from_ptr(entry.szExeFile.as_ptr())
                     .to_str()
@@ -140,12 +128,11 @@ pub fn get_proc_id(exe_name: &str) -> DWORD {
                 break;
             }
         }
-        return proc_id;
+        match proc_id {
+            0 => Err(String::from("Could not find process")),
+            _ => Ok(proc_id),
+        }
     }
-}
-
-pub fn get_process_adress(module: HMODULE, proc_name: *const u8) -> *mut c_void {
-    unsafe { GetProcAddress(module, proc_name as _) as _ }
 }
 
 pub fn find_dma_addy(handle: HANDLE, ptr: u32, ptrs: &[u32]) -> Result<u32, String> {
@@ -203,7 +190,9 @@ pub fn read_ptr(handle: HANDLE, adress: usize) -> Result<u32, String> {
 }
 
 use winapi::um::errhandlingapi::GetLastError;
-use winapi::um::winbase::FormatMessageA;
+use winapi::um::winbase::{
+    FormatMessageA, FORMAT_MESSAGE_ALLOCATE_BUFFER, FORMAT_MESSAGE_FROM_SYSTEM,
+};
 use winapi::um::winnt::{LANG_NEUTRAL, LPSTR, MAKELANGID, SUBLANG_DEFAULT};
 
 pub fn get_last_error_message() -> String {
@@ -211,8 +200,8 @@ pub fn get_last_error_message() -> String {
         let error_code = GetLastError();
 
         let mut message_buffer: LPSTR = std::mem::zeroed();
-        let buffer_size = FormatMessageA(
-            0x00001000 | 0x00000100, // FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+        FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
             null_mut(),
             error_code,
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) as DWORD,
