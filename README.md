@@ -14,3 +14,4 @@ Of course ! Feel free to open a pull request if you wan't to improve the repo
 - [ ] Add a gui, or at lest a println to show wich module is loaded / active
 - [ ] Add a module that freeze value in memory
 - [ ] Add a module that write value in memory
+- [ ] Add an aimbot
