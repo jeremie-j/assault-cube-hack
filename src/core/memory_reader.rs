@@ -4,21 +4,33 @@ use winapi::um::winnt::HANDLE;
 
 use crate::helpers::memory_helper;
 
+pub enum Keybind {
+    InfiniteAmmo = 0x4F, // O
+    AntiRecoil = 0x50,   // P
+    InfiniteJump = 0x46, // F
+}
+
 const AMMO_OFFSET: [u32; 3] = [0x374, 0x14, 0x0];
 const CAN_JUMP_OFFSET: [u32; 3] = [0x374, 0x8, 0x5D];
 
 pub trait Cheat {
+    fn new(
+        toggle_keybind: Keybind,
+        proc_id: u32,
+        game_base_adress: usize,
+        game_handle: HANDLE,
+    ) -> Self;
     fn update(&mut self) -> Result<(), String>;
 }
 
-pub struct CheatInstance<T: Cheat> {
+pub struct CheatInstance {
     pub proc_id: u32,
     pub game_base_adress: usize,
     pub game_handle: HANDLE,
-    cheats: Vec<T>,
+    cheats: Vec<Box<dyn Cheat>>,
 }
 
-impl<T: Cheat> CheatInstance<T> {
+impl CheatInstance {
     pub fn new(exe_name: &str) -> Self {
         let proc_id = memory_helper::get_proc_id(exe_name).unwrap();
         let game_base_adress = memory_helper::get_module_base_adress(proc_id, exe_name).unwrap();
@@ -32,7 +44,13 @@ impl<T: Cheat> CheatInstance<T> {
         }
     }
 
-    pub fn add(&mut self, cheat: T) {
+    pub fn add<T: Cheat>(&mut self, keybind: Keybind) {
+        let cheat = T::new(
+            keybind,
+            self.proc_id,
+            self.game_base_adress,
+            self.game_handle,
+        );
         self.cheats.push(cheat);
     }
 
