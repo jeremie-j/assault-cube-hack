@@ -19,7 +19,9 @@ pub trait Cheat {
         proc_id: u32,
         game_base_adress: usize,
         game_handle: HANDLE,
-    ) -> Self;
+    ) -> Self
+    where
+        Self: Sized;
     fn update(&mut self) -> Result<(), String>;
 }
 
@@ -44,14 +46,14 @@ impl CheatInstance {
         }
     }
 
-    pub fn add<T: Cheat>(&mut self, keybind: Keybind) {
+    pub fn add<T: Cheat + 'static>(&mut self, keybind: Keybind) {
         let cheat = T::new(
             keybind,
             self.proc_id,
             self.game_base_adress,
             self.game_handle,
         );
-        self.cheats.push(cheat);
+        self.cheats.push(Box::new(cheat));
     }
 
     pub fn run(&mut self) {
