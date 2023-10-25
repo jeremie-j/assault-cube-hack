@@ -1,8 +1,16 @@
-use std::str;
+use {ggez::event, std::str};
 
 use winapi::um::winnt::HANDLE;
 
-use crate::helpers::memory_helper;
+use {
+    crate::helpers::memory_helper,
+    ggez::{Context, GameResult},
+};
+
+use ggez::{
+    glam::*,
+    graphics::{self, Color},
+};
 
 pub enum Keybind {
     InfiniteAmmo = 0x4F, // O
@@ -33,17 +41,17 @@ pub struct CheatInstance {
 }
 
 impl CheatInstance {
-    pub fn new(exe_name: &str) -> Self {
+    pub fn new(exe_name: &str) -> GameResult<CheatInstance> {
         let proc_id = memory_helper::get_proc_id(exe_name).unwrap();
         let game_base_adress = memory_helper::get_module_base_adress(proc_id, exe_name).unwrap();
         let game_handle = memory_helper::get_process_handle(proc_id as u32);
 
-        Self {
+        Ok(CheatInstance {
             proc_id,
             game_base_adress,
             game_handle,
             cheats: Vec::new(),
-        }
+        })
     }
 
     pub fn add<T: Cheat + 'static>(&mut self, keybind: Keybind) {
@@ -55,13 +63,33 @@ impl CheatInstance {
         );
         self.cheats.push(Box::new(cheat));
     }
+}
 
-    pub fn run(&mut self) {
-        loop {
-            print!("\x1B[2J\x1B[1;1H");
-            for cheat in &mut self.cheats {
-                let _ = cheat.update();
-            }
+impl event::EventHandler<ggez::GameError> for CheatInstance {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        for cheat in &mut self.cheats {
+            let _ = cheat.update();
         }
+        Ok(())
+    }
+
+    fn draw(&mut self, _ctx: &mut Context) -> GameResult {
+        let circle = graphics::Mesh::new_circle(
+            _ctx,
+            graphics::DrawMode::fill(),
+            vec2(0., 0.),
+            20.0,
+            2.0,
+            Color::WHITE,
+        )?;
+
+        let mut canvas =
+            graphics::Canvas::from_frame(_ctx, graphics::Color::from([0.0, 0.0, 0.0, 0.0]));
+
+        canvas.draw(&circle, Vec2::new(500.0, 500.0));
+
+        canvas.finish(_ctx)?;
+
+        Ok(())
     }
 }

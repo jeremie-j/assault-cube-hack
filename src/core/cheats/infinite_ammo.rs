@@ -1,12 +1,8 @@
 use std::ptr::null_mut;
 
-use winapi::shared::minwindef::LPCVOID;
-use winapi::um::memoryapi::WriteProcessMemory;
-use winapi::um::winnt::HANDLE;
+use winapi::um::{memoryapi::WriteProcessMemory, winnt::HANDLE};
 
-use crate::core::memory_reader;
-use crate::helpers::memory_helper;
-use crate::Keybind;
+use crate::{core::memory_reader, helpers::memory_helper, Keybind};
 
 const AMMO_OFFSET: [u32; 3] = [0x374, 0x14, 0x0];
 
