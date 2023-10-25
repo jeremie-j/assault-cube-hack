@@ -1,23 +1,21 @@
-use std::ffi::CStr;
-use std::{i32, mem, ptr::null_mut, str};
+use std::{ffi::CStr, i32, mem, ptr::null_mut, str};
 
-use winapi::um::handleapi::CloseHandle;
-use winapi::um::processthreadsapi::OpenProcess;
-use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, TH32CS_SNAPMODULE,
-    TH32CS_SNAPMODULE32,
-};
-use winapi::um::winnt::{PROCESS_ALL_ACCESS, PROCESS_VM_READ, PROCESS_VM_WRITE};
 use winapi::{
-    ctypes::{c_long, c_void},
-    shared::minwindef::{BOOL, DWORD, FALSE, HMODULE, LPCVOID, LPVOID},
-    shared::ntdef::HANDLE,
+    ctypes::c_long,
+    shared::{
+        minwindef::{BOOL, DWORD, FALSE, HMODULE, LPCVOID, LPVOID},
+        ntdef::HANDLE,
+    },
     um::{
-        handleapi::INVALID_HANDLE_VALUE,
+        handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         libloaderapi::GetModuleHandleA,
         memoryapi::ReadProcessMemory,
-        tlhelp32::{Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS},
-        winnt::{PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS},
+        processthreadsapi::OpenProcess,
+        tlhelp32::{
+            CreateToolhelp32Snapshot, Module32First, Module32Next, Process32Next, MODULEENTRY32,
+            PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
+        },
+        winnt::{PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS, PROCESS_ALL_ACCESS},
     },
 };
 
@@ -189,11 +187,11 @@ pub fn read_ptr(handle: HANDLE, adress: usize) -> Result<u32, String> {
     Ok(u32::from_le_bytes(bytes))
 }
 
-use winapi::um::errhandlingapi::GetLastError;
-use winapi::um::winbase::{
-    FormatMessageA, FORMAT_MESSAGE_ALLOCATE_BUFFER, FORMAT_MESSAGE_FROM_SYSTEM,
+use winapi::um::{
+    errhandlingapi::GetLastError,
+    winbase::{FormatMessageA, FORMAT_MESSAGE_ALLOCATE_BUFFER, FORMAT_MESSAGE_FROM_SYSTEM},
+    winnt::{LANG_NEUTRAL, LPSTR, MAKELANGID, SUBLANG_DEFAULT},
 };
-use winapi::um::winnt::{LANG_NEUTRAL, LPSTR, MAKELANGID, SUBLANG_DEFAULT};
 
 pub fn get_last_error_message() -> String {
     unsafe {
