@@ -1,3 +1,7 @@
+use std::ptr::null_mut;
+
+use winapi::shared::minwindef::LPCVOID;
+use winapi::um::memoryapi::WriteProcessMemory;
 use winapi::um::winnt::HANDLE;
 
 use crate::core::memory_reader;
@@ -18,24 +22,6 @@ pub struct InfiniteAmmo {
 }
 
 impl InfiniteAmmo {
-    pub fn new(
-        toggle_keybind: Keybind,
-        proc_id: u32,
-        game_base_adress: usize,
-        game_handle: HANDLE,
-    ) -> InfiniteAmmo {
-        InfiniteAmmo {
-            toggle_keybind,
-            proc_id,
-            game_base_adress,
-            game_handle,
-
-            active: true,
-            ammo_adress: None,
-            ammo_value: None,
-        }
-    }
-
     fn update_ammo_adress(&mut self) {
         let result = memory_helper::find_dma_addy(
             self.game_handle,
@@ -54,6 +40,20 @@ impl InfiniteAmmo {
     fn get_ammo_value(&self, ammo_address: usize) -> Result<i32, String> {
         memory_helper::read_int(self.game_handle, ammo_address)
     }
+
+    fn write_ammo_value(&self, ammo_address: usize, ammo_value: i32) {
+        let value_byte = ammo_value.to_le_bytes();
+        let address = ammo_address as *mut _;
+        unsafe {
+            WriteProcessMemory(
+                self.game_handle,
+                address,
+                value_byte.as_ptr() as *const _,
+                value_byte.len(),
+                null_mut(),
+            );
+        }
+    }
 }
 
 impl memory_reader::Cheat for InfiniteAmmo {
@@ -66,9 +66,28 @@ impl memory_reader::Cheat for InfiniteAmmo {
                 Ok(value) => println!("Ammo value {}", value),
                 Err(_) => self.update_ammo_adress(),
             };
+            self.write_ammo_value(valid_ammo_adress, 9999);
         } else {
             self.update_ammo_adress()
         }
         Ok(())
+    }
+
+    fn new(
+        toggle_keybind: Keybind,
+        proc_id: u32,
+        game_base_adress: usize,
+        game_handle: HANDLE,
+    ) -> InfiniteAmmo {
+        InfiniteAmmo {
+            toggle_keybind,
+            proc_id,
+            game_base_adress,
+            game_handle,
+
+            active: true,
+            ammo_adress: None,
+            ammo_value: None,
+        }
     }
 }
